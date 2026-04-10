@@ -784,6 +784,8 @@ function clearTerminal() {
   document.getElementById('terminalBody').innerHTML = '';
 }
 
+let currentTask = null;
+
 async function doReset() {
   const task = document.getElementById('taskSelect').value;
   const seed = parseInt(document.getElementById('seedInput').value) || 42;
@@ -799,10 +801,15 @@ async function doReset() {
     });
     const data = await r.json();
     const body = document.getElementById('terminalBody');
-    // Remove loading dots
     body.querySelectorAll('.loading').forEach(e => e.remove());
 
-    log(`<span class="t-sys">✓ Episode started  max_steps=${data.max_steps}</span>`);
+    if (!r.ok) {
+      log(`<span class="t-err">✗ Reset failed ${r.status}: ${escapeHtml(data.detail || JSON.stringify(data))}</span>`);
+      return;
+    }
+
+    currentTask = task;
+    log(`<span class="t-sys">✓ Episode started  task=${task}  max_steps=${data.max_steps}</span>`);
     log(`<div class="t-line"></div>`);
     log(`<span class="t-obs">${escapeHtml(data.message || JSON.stringify(data.observation, null, 2))}</span>`);
     if (data.available_actions && data.available_actions.length) {
@@ -810,6 +817,8 @@ async function doReset() {
       log(`<span class="t-sys">Available actions:</span>`);
       log(`<span class="t-act">${data.available_actions.slice(0,6).join('  ·  ')}${data.available_actions.length > 6 ? '  +' + (data.available_actions.length-6) + ' more' : ''}</span>`);
     }
+    log(`<div class="t-line"></div>`);
+    log(`<span class="t-sys">Type an action above and press SEND ACTION →</span>`);
   } catch(e) {
     log(`<span class="t-err">✗ ${escapeHtml(e.message)} — is the server running?</span>`);
   }
@@ -819,6 +828,11 @@ async function doStep() {
   const task = document.getElementById('taskSelect').value;
   const action = document.getElementById('actionInput').value.trim();
   if (!action) { log(`<span class="t-err">Enter an action first.</span>`); return; }
+  if (!currentTask) { log(`<span class="t-err">Press RESET EPISODE first.</span>`); return; }
+  if (currentTask !== task) {
+    log(`<span class="t-err">Task changed — press RESET EPISODE again for ${task}.</span>`);
+    return;
+  }
 
   log(`<div class="t-line"></div>`);
   log(`<span class="t-act">→ ${escapeHtml(action)}</span>`);
@@ -830,10 +844,18 @@ async function doStep() {
       body: JSON.stringify({action_type:'text', content: action})
     });
     const data = await r.json();
-    log(`<span class="t-obs">${escapeHtml(data.message || '')}</span>`);
-    log(`<span class="t-rew">reward=${data.reward?.toFixed(3)}  done=${data.done}  step=${data.step_number}/${data.max_steps}</span>`);
+    if (!r.ok) {
+      log(`<span class="t-err">✗ Server error ${r.status}: ${escapeHtml(data.detail || JSON.stringify(data))}</span>`);
+      return;
+    }
+    if (data.message) log(`<span class="t-obs">${escapeHtml(data.message)}</span>`);
+    log(`<span class="t-rew">reward=${(data.reward ?? 0).toFixed(3)}  done=${data.done}  step=${data.step_number}/${data.max_steps}</span>`);
+    if (data.available_actions && data.available_actions.length && !data.done) {
+      log(`<span class="t-act">next: ${data.available_actions.slice(0,4).join('  ·  ')}${data.available_actions.length > 4 ? ' +' + (data.available_actions.length-4) + ' more' : ''}</span>`);
+    }
     if (data.done) {
-      log(`<span class="t-done">══ EPISODE COMPLETE  final_reward=${data.reward?.toFixed(3)} ══</span>`);
+      log(`<span class="t-done">══ EPISODE COMPLETE  final_reward=${(data.reward ?? 0).toFixed(3)} ══</span>`);
+      currentTask = null;
     }
   } catch(e) {
     log(`<span class="t-err">✗ ${escapeHtml(e.message)}</span>`);
