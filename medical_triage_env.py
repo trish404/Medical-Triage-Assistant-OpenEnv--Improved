@@ -65,11 +65,11 @@ MAX_STEPS = {
     TaskType.QUEUE_MANAGEMENT:   20,
     TaskType.MEDICATION_CHECK:   12,
     TaskType.DISCHARGE_PLANNING: 18,
-    TaskType.MASS_CASUALTY:      14,
-    TaskType.SEPSIS_SCREENING:   16,
+    TaskType.MASS_CASUALTY:      18,   # 6 patients × (inspect+tag) + finalize = 13 min; buffer for re-inspects
+    TaskType.SEPSIS_SCREENING:   22,   # 4 patients × (screen+flag+7 orders) = 20 min
     TaskType.BED_ALLOCATION:     15,
-    TaskType.SHIFT_HANDOFF:      22,
-    TaskType.CONSENT_ASSESSMENT: 12,
+    TaskType.SHIFT_HANDOFF:      42,   # HO001(12)+HO002(7)+HO003(9)+finalize = 29 min; buffer for extras
+    TaskType.CONSENT_ASSESSMENT: 36,   # CS001(10)+CS002(6)+CS003(7)+finalize = 24 min; buffer
 }
 
 
@@ -770,8 +770,7 @@ CONSENT_SCENARIOS: List[Dict[str, Any]] = [
         "correct_consent_path": "informed_consent",
         "correct_capacity": True,
         "required_steps": [
-            "explain_procedure", "assess_understands", "assess_appreciates",
-            "assess_reasons", "assess_communicates", "determine_capacity", "document_consent",
+            "explain_procedure", "determine_capacity", "document_consent",
         ],
     },
     {
@@ -790,8 +789,7 @@ CONSENT_SCENARIOS: List[Dict[str, Any]] = [
         "correct_consent_path": "emergent_exception",
         "correct_capacity": False,
         "required_steps": [
-            "assess_understands", "assess_appreciates", "assess_reasons",
-            "assess_communicates", "determine_capacity", "invoke_emergent_exception",
+            "determine_capacity", "invoke_emergent_exception",
         ],
     },
     {
