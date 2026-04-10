@@ -1,0 +1,239 @@
+warning: `VIRTUAL_ENV=/Users/triahavijayekkumaran/Downloads/mv4/venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead
+
+============================================================
+Running task: esi_assignment
+============================================================
+[START] task=esi_assignment env=medical_triage model=llama-3.1-8b-instant
+[STEP] step=1 action=assign_esi:5 reward=1.00 done=true error=null
+[END] success=true steps=1 score=0.999 rewards=1.00
+
+============================================================
+Running task: intake_interview
+============================================================
+[START] task=intake_interview env=medical_triage model=llama-3.1-8b-instant
+[STEP] step=1 action=ask:pain_scale reward=0.00 done=false error=null
+[STEP] step=2 action=ask:onset reward=0.00 done=false error=null
+[STEP] step=3 action=ask:duration reward=0.00 done=false error=null
+[STEP] step=4 action=ask:location reward=0.00 done=false error=null
+[STEP] step=5 action=ask:associated_symptoms reward=0.00 done=false error=null
+[STEP] step=6 action=ask:medical_history reward=0.00 done=false error=null
+[STEP] step=7 action=ask:current_medications reward=0.00 done=false error=null
+[STEP] step=8 action=ask:last_meal reward=0.00 done=false error=null
+[STEP] step=9 action=ask:allergies reward=0.00 done=false error=null
+[STEP] step=10 action=ask:onset reward=0.00 done=false error=null
+[STEP] step=11 action=ask:duration reward=0.00 done=false error=null
+[STEP] step=12 action=ask:associated_symptoms reward=0.00 done=false error=null
+[STEP] step=13 action=ask:location reward=0.00 done=false error=null
+[STEP] step=14 action=ask:medical_history reward=0.00 done=false error=null
+[STEP] step=15 action=ask:current_medications reward=0.91 done=true error=null
+[END] success=true steps=15 score=0.910 rewards=0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.91
+
+============================================================
+Running task: queue_management
+============================================================
+[START] task=queue_management env=medical_triage model=llama-3.1-8b-instant
+[STEP] step=1 action=get_vitals:Q001 reward=0.00 done=false error=null
+[STEP] step=2 action=get_vitals:Q002 reward=0.00 done=false error=null
+[STEP] step=3 action=get_vitals:Q003 reward=0.00 done=false error=null
+[STEP] step=4 action=get_vitals:Q004 reward=0.00 done=false error=null
+[STEP] step=5 action=get_vitals:Q005 reward=0.00 done=false error=null
+[STEP] step=6 action=get_vitals:Q001 reward=0.00 done=false error=null
+[STEP] step=7 action=get_vitals:Q002 reward=0.00 done=false error=null
+[STEP] step=8 action=get_vitals:Q003 reward=0.00 done=false error=null
+[STEP] step=9 action=get_vitals:Q004 reward=0.00 done=false error=null
+[STEP] step=10 action=get_vitals:Q005 reward=0.00 done=false error=null
+[STEP] step=11 action=get_vitals:Q001 reward=0.00 done=false error=null
+[STEP] step=12 action=get_vitals:Q002 reward=0.00 done=false error=null
+[STEP] step=13 action=get_vitals:Q003 reward=0.00 done=false error=null
+[STEP] step=14 action=get_vitals:Q004 reward=0.00 done=false error=null
+[STEP] step=15 action=get_vitals:Q005 reward=0.00 done=false error=null
+[STEP] step=16 action=get_vitals:Q001 reward=0.00 done=false error=null
+[STEP] step=17 action=get_vitals:Q002 reward=0.00 done=false error=null
+[STEP] step=18 action=get_vitals:Q003 reward=0.00 done=false error=null
+[STEP] step=19 action=get_vitals:Q004 reward=0.00 done=false error=null
+[STEP] step=20 action=get_vitals:Q005 reward=0.30 done=true error=null
+[END] success=false steps=20 score=0.300 rewards=0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.30
+
+============================================================
+Running task: medication_check
+============================================================
+[START] task=medication_check env=medical_triage model=llama-3.1-8b-instant
+[STEP] step=1 action=flag_allergy:trimethoprim-sulfamethoxazole reward=0.00 done=false error=null
+[STEP] step=2 action=warfarin reward=0.00 done=false error=null
+[STEP] step=3 action=flag_interaction:warfarin reward=0.00 done=false error=null
+[STEP] step=4 action=aspirin reward=0.00 done=false error=null
+[STEP] step=5 action=approve:aspirin reward=0.00 done=false error=null
+[STEP] step=6 action=approve:aspirin penalised -0.15 reward=0.00 done=false error=null
+[STEP] step=7 action=flag_allergy:amoxicillin reward=0.00 done=false error=null
+[STEP] step=8 action=aspirin,amoxicillin reward=0.00 done=false error=null
+[STEP] step=9 action=flag_interaction:<med>  OR  ACTION: approve:<med>  OR  ACTION: complete_review reward=0.00 done=false error=null
+[STEP] step=10 action=approve:<med> reward=0.00 done=false error=null
+[STEP] step=11 action=warfarin reward=0.00 done=false error=null
+[STEP] step=12 action=flag_interaction:warfarin reward=0.55 done=true error=null
+[END] success=true steps=12 score=0.550 rewards=0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.55
+
+============================================================
+Running task: discharge_planning
+============================================================
+[START] task=discharge_planning env=medical_triage model=llama-3.1-8b-instant
+[STEP] step=1 action=add_instruction:rest_48h reward=0.00 done=false error=null
+[STEP] step=2 action=add_instruction:complete_antibiotics reward=0.00 done=false error=null
+[STEP] step=3 action=add_instruction:hydration reward=0.00 done=false error=null
+[STEP] step=4 action=add_warning:fever_101 reward=0.00 done=false error=null
+[STEP] step=5 action=add_instruction:avoid_alcohol reward=0.00 done=false error=null
+[STEP] step=6 action=add_warning:difficulty_breathing reward=0.00 done=false error=null
+[STEP] step=7 action=add_instruction:otc_pain_management reward=0.00 done=false error=null
+[STEP] step=8 action=add_warning:rash_hives reward=0.00 done=false error=null
+[STEP] step=9 action=add_warning:fever_101 reward=0.00 done=false error=null
+[STEP] step=10 action=add_warning:ed_return_if_worse reward=0.00 done=false error=null
+[STEP] step=11 action=add_warning:difficulty_breathing reward=0.00 done=false error=null
+[STEP] step=12 action=add_instruction:rest_48h reward=0.00 done=false error=null
+[STEP] step=13 action=add_warning:rash_hives reward=0.00 done=false error=null
+[STEP] step=14 action=add_warning:fever_101 reward=0.00 done=false error=null
+[STEP] step=15 action=add_warning:ed_return_if_worse reward=0.00 done=false error=null
+[STEP] step=16 action=add_warning:difficulty_breathing reward=0.00 done=false error=null
+[STEP] step=17 action=add_instruction:rest_48h reward=0.00 done=false error=null
+[STEP] step=18 action=add_warning:rash_hives reward=0.88 done=true error=null
+[END] success=true steps=18 score=0.880 rewards=0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.88
+
+============================================================
+Running task: mass_casualty
+============================================================
+[START] task=mass_casualty env=medical_triage model=llama-3.1-8b-instant
+[STEP] step=1 action=inspect:MCI-A1 reward=0.00 done=false error=null
+[STEP] step=2 action=tag:MCI-A1:GREEN reward=0.00 done=false error=null
+[STEP] step=3 action=inspect:MCI-A2 reward=0.00 done=false error=null
+[STEP] step=4 action=tag:MCI-A2:RED reward=0.00 done=false error=null
+[STEP] step=5 action=inspect:MCI-A3 reward=0.00 done=false error=null
+[STEP] step=6 action=tag:MCI-A3:BLACK reward=0.00 done=false error=null
+[STEP] step=7 action=inspect:MCI-A4 reward=0.00 done=false error=null
+[STEP] step=8 action=inspect:MCI-A5 reward=0.00 done=false error=null
+[STEP] step=9 action=tag:MCI-A5:RED reward=0.00 done=false error=null
+[STEP] step=10 action=inspect:MCI-A6 reward=0.00 done=false error=null
+[STEP] step=11 action=inspect:MCI-A4 reward=0.00 done=false error=null
+[STEP] step=12 action=tag:MCI-A4:RED reward=0.00 done=false error=null
+[STEP] step=13 action=inspect:MCI-A3 reward=0.00 done=false error=null
+[STEP] step=14 action=inspect:MCI-A2 reward=0.00 done=false error=null
+[STEP] step=15 action=inspect:MCI-A6 reward=0.00 done=false error=null
+[STEP] step=16 action=inspect:MCI-A1 reward=0.00 done=false error=null
+[STEP] step=17 action=inspect:MCI-A5 reward=0.00 done=false error=null
+[STEP] step=18 action=inspect:MCI-A3 reward=0.83 done=true error=null
+[END] success=true steps=18 score=0.833 rewards=0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.83
+
+============================================================
+Running task: sepsis_screening
+============================================================
+[START] task=sepsis_screening env=medical_triage model=llama-3.1-8b-instant
+[STEP] step=1 action=screen:SS001 reward=0.00 done=false error=null
+[STEP] step=2 action=flag_sepsis:SS001 reward=0.00 done=false error=null
+[STEP] step=3 action=order:SS001:blood_cultures reward=0.00 done=false error=null
+[STEP] step=4 action=screen:SS002 reward=0.00 done=false error=null
+[STEP] step=5 action=clear:SS002 reward=0.00 done=false error=null
+[STEP] step=6 action=screen:SS003 reward=0.00 done=false error=null
+[STEP] step=7 action=flag_sepsis:SS003 reward=0.00 done=false error=null
+[STEP] step=8 action=screen:SS004 reward=0.00 done=false error=null
+[STEP] step=9 action=clear:SS004 reward=0.00 done=false error=null
+[STEP] step=10 action=order:SS001:lactate reward=0.00 done=false error=null
+[STEP] step=11 action=order:SS001:cbc reward=0.00 done=false error=null
+[STEP] step=12 action=screen:SS002 reward=0.00 done=false error=null
+[STEP] step=13 action=order:SS001:bmp reward=0.00 done=false error=null
+[STEP] step=14 action=screen:SS003 reward=0.00 done=false error=null
+[STEP] step=15 action=flag_sepsis:SS003 reward=0.00 done=false error=null
+[STEP] step=16 action=order:SS003:blood_cultures reward=0.00 done=false error=null
+[STEP] step=17 action=order:SS003:lactate reward=0.00 done=false error=null
+[STEP] step=18 action=order:SS003:cbc reward=0.00 done=false error=null
+[STEP] step=19 action=order:SS003:bmp reward=0.00 done=false error=null
+[STEP] step=20 action=screen:SS002 reward=0.00 done=false error=null
+[STEP] step=21 action=clear:SS002 reward=0.00 done=false error=null
+[STEP] step=22 action=screen:SS001 reward=0.83 done=true error=null
+[END] success=true steps=22 score=0.829 rewards=0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.83
+
+============================================================
+Running task: bed_allocation
+============================================================
+[START] task=bed_allocation env=medical_triage model=llama-3.1-8b-instant
+[STEP] step=1 action=assign:BD001:trauma_bay reward=0.00 done=false error=null
+[STEP] step=2 action=get_info:BD001 reward=0.00 done=false error=null
+[STEP] step=3 action=assign:BD002:trauma_bay reward=0.00 done=false error=null
+[STEP] step=4 action=get_info:BD003 reward=0.00 done=false error=null
+[STEP] step=5 action=assign:BD003:isolation_room reward=0.00 done=false error=null
+[STEP] step=6 action=get_info:BD004 reward=0.00 done=false error=null
+[STEP] step=7 action=assign:BD004:trauma_bay reward=0.00 done=false error=null
+[STEP] step=8 action=get_info:BD005 reward=0.00 done=false error=null
+[STEP] step=9 action=assign:BD005:cardiac_monitor reward=0.00 done=false error=null
+[STEP] step=10 action=get_info:BD006 reward=0.00 done=false error=null
+[STEP] step=11 action=assign:BD006:regular_bed reward=0.00 done=false error=null
+[STEP] step=12 action=get_info:BD007 reward=0.00 done=false error=null
+[STEP] step=13 action=assign:BD007:regular_bed reward=0.00 done=false error=null
+[STEP] step=14 action=get_info:BD008 reward=0.00 done=false error=null
+[STEP] step=15 action=assign:BD008:cardiac_monitor reward=0.84 done=true error=null
+[END] success=true steps=15 score=0.842 rewards=0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.84
+
+============================================================
+Running task: shift_handoff
+============================================================
+[START] task=shift_handoff env=medical_triage model=llama-3.1-8b-instant
+[STEP] step=1 action=report:HO001:situation_chief_complaint reward=0.00 done=false error=null
+[STEP] step=2 action=report:HO001:situation_current_status reward=0.00 done=false error=null
+[STEP] step=3 action=report:HO001:situation_acuity_level reward=0.00 done=false error=null
+[STEP] step=4 action=report:HO001:background_medical_history reward=0.00 done=false error=null
+[DEBUG] Model error: Error code: 503 - {'error': {'message': 'llama-3.1-8b-instant is currently over capacity. Please try again and back off exponentially. Visit https://groqstatus.com to see if there is an active incident.', 'type': 'internal_server_error'}}
+[STEP] step=5 action=complete_handoff reward=0.11 done=true error=null
+[END] success=false steps=5 score=0.111 rewards=0.00,0.00,0.00,0.00,0.11
+
+============================================================
+Running task: consent_assessment
+============================================================
+[START] task=consent_assessment env=medical_triage model=llama-3.1-8b-instant
+[STEP] step=1 action=assess:CS001:understands_info reward=0.00 done=false error=null
+[STEP] step=2 action=assess:CS001:appreciates_situation reward=0.00 done=false error=null
+[STEP] step=3 action=assess:CS001:reasons_through_options reward=0.00 done=false error=null
+[STEP] step=4 action=assess:CS001:communicates_choice reward=0.00 done=false error=null
+[STEP] step=5 action=declare_capacity:CS001:has_capacity reward=0.00 done=false error=null
+[STEP] step=6 action=step:CS001:explain_procedure reward=0.00 done=false error=null
+[STEP] step=7 action=step:CS001:determine_capacity reward=0.00 done=false error=null
+[STEP] step=8 action=finalize:CS003 reward=0.00 done=false error=null
+[STEP] step=9 action=finalize:CS003 reward=0.00 done=false error=null
+[STEP] step=10 action=declare_capacity:CS001:has_capacity reward=0.00 done=false error=null
+[STEP] step=11 action=step:CS001:explain_procedure reward=0.00 done=false error=null
+[STEP] step=12 action=step:CS001:determine_capacity reward=0.00 done=false error=null
+[STEP] step=13 action=finalize:CS003 reward=0.00 done=false error=null
+[STEP] step=14 action=finalize:CS003 reward=0.00 done=false error=null
+[STEP] step=15 action=assess:CS001:understands_info reward=0.00 done=false error=null
+[STEP] step=16 action=assess:CS001:appreciates_situation reward=0.00 done=false error=null
+[STEP] step=17 action=assess:CS001:reasons_through_options reward=0.00 done=false error=null
+[STEP] step=18 action=assess:CS001:communicates_choice reward=0.00 done=false error=null
+[STEP] step=19 action=declare_capacity:CS001:has_capacity reward=0.00 done=false error=null
+[STEP] step=20 action=step:CS001:explain_procedure reward=0.00 done=false error=null
+[STEP] step=21 action=step:CS001:determine_capacity reward=0.00 done=false error=null
+[STEP] step=22 action=finalize:CS003 reward=0.00 done=false error=null
+[STEP] step=23 action=finalize:CS003 reward=0.00 done=false error=null
+[STEP] step=24 action=assess:CS001:understands_info reward=0.00 done=false error=null
+[STEP] step=25 action=assess:CS001:appreciates_situation reward=0.00 done=false error=null
+[STEP] step=26 action=assess:CS001:reasons_through_options reward=0.00 done=false error=null
+[STEP] step=27 action=assess:CS001:communicates_choice reward=0.00 done=false error=null
+[STEP] step=28 action=declare_capacity:CS001:has_capacity reward=0.00 done=false error=null
+[STEP] step=29 action=step:CS001:explain_procedure reward=0.00 done=false error=null
+[STEP] step=30 action=step:CS001:determine_capacity reward=0.00 done=false error=null
+[STEP] step=31 action=finalize:CS003 reward=0.00 done=false error=null
+[STEP] step=32 action=finalize:CS003 reward=0.00 done=false error=null
+[STEP] step=33 action=assess:CS001:understands_info reward=0.00 done=false error=null
+[STEP] step=34 action=assess:CS001:appreciates_situation reward=0.00 done=false error=null
+[STEP] step=35 action=assess:CS001:reasons_through_options reward=0.00 done=false error=null
+[STEP] step=36 action=assess:CS001:communicates_choice reward=0.11 done=true error=null
+[END] success=false steps=36 score=0.111 rewards=0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.11
+
+============================================================
+AGGREGATE SCORE: 0.636
+  esi_assignment            0.999
+  intake_interview          0.910
+  queue_management          0.300
+  medication_check          0.550
+  discharge_planning        0.880
+  mass_casualty             0.833
+  sepsis_screening          0.829
+  bed_allocation            0.842
+  shift_handoff             0.111
+  consent_assessment        0.111
+============================================================
+(venv) (base) bash-3.2$ 
