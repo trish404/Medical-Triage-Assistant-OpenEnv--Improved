@@ -535,11 +535,84 @@
     40% { transform: translateY(-4px); opacity: 1; }
   }
 
+  /* Demo note */
+  .demo-note {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    background: rgba(0,212,255,0.06);
+    border: 1px solid rgba(0,212,255,0.25);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-dim);
+  }
+  .demo-note-icon {
+    font-size: 16px;
+    color: var(--accent);
+    font-weight: 700;
+    min-width: 20px;
+    padding-top: 1px;
+  }
+  .demo-note-text strong { color: var(--text); }
+  .demo-note-text code {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: rgba(0,212,255,0.1);
+    padding: 1px 5px;
+    border-radius: 2px;
+    color: var(--accent);
+  }
+
+  /* Protocols grid */
+  .protocols-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+  .protocol-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 18px 20px;
+    animation: fadeIn 0.3s ease both;
+  }
+  .protocol-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(0,212,255,0.1);
+    border: 1px solid rgba(0,212,255,0.2);
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 2px;
+    margin-bottom: 8px;
+  }
+  .protocol-name {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .protocol-desc {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
   @media (max-width: 900px) {
     main { padding: 20px; }
     .stats-strip { grid-template-columns: 1fr 1fr; }
     .task-grid { grid-template-columns: 1fr; }
     .try-panel { grid-template-columns: 1fr; }
+    .protocols-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -596,6 +669,14 @@
     <div class="section-line"></div>
   </div>
 
+  <div class="demo-note">
+    <div class="demo-note-icon">ℹ</div>
+    <div class="demo-note-text">
+      <strong>This panel is for demonstration only.</strong>
+      In production, an LLM agent (Claude, GPT-4, Llama etc.) plays this environment automatically via <code>inference.py</code> — reading each observation, reasoning through the clinical protocol, and selecting actions to maximise reward. You are stepping through manually to see exactly what the agent experiences.
+    </div>
+  </div>
+
   <div class="try-panel">
     <div class="panel-box">
       <div class="panel-title">// configure episode</div>
@@ -642,58 +723,44 @@
     </div>
   </div>
 
-  <!-- Competitive table -->
+  <!-- Clinical Protocols Summary -->
   <div class="section-header">
-    <h2>Competitive Analysis</h2>
+    <h2>Clinical Protocols</h2>
     <div class="section-line"></div>
   </div>
 
-  <table class="comp-table">
-    <thead>
-      <tr>
-        <th>Environment</th>
-        <th>Tasks</th>
-        <th>Decision Type</th>
-        <th>Real Protocols</th>
-        <th>Dynamic Events</th>
-        <th>Grading</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Smart Hospital</td>
-        <td class="num">3</td>
-        <td>Single-step classification</td>
-        <td class="no">✗</td>
-        <td class="no">✗</td>
-        <td>Simple accuracy</td>
-      </tr>
-      <tr>
-        <td>AiTrade</td>
-        <td class="num">4</td>
-        <td>buy / sell / hold</td>
-        <td class="no">✗</td>
-        <td class="no">✗</td>
-        <td>Simple reward</td>
-      </tr>
-      <tr>
-        <td>Scaler SupportTriage</td>
-        <td class="num">5</td>
-        <td>Single-step routing</td>
-        <td class="no">✗</td>
-        <td class="no">✗</td>
-        <td>Simple reward</td>
-      </tr>
-      <tr class="us">
-        <td><strong>Medical Triage Bench</strong></td>
-        <td class="num">10</td>
-        <td>Multi-step sequential (5–22)</td>
-        <td class="yes">✓ ESI, START, qSOFA, SBAR, Capacity</td>
-        <td class="yes">✓ Mid-episode deterioration</td>
-        <td>Kendall-τ · F1 · partial credit · penalties</td>
-      </tr>
-    </tbody>
-  </table>
+  <div class="protocols-grid">
+    <div class="protocol-card">
+      <div class="protocol-tag">ESI v4</div>
+      <div class="protocol-name">Emergency Severity Index</div>
+      <div class="protocol-desc">5-level triage scale developed by ACEP and ENA. Agents classify patients 1 (immediate life threat) to 5 (non-urgent) by evaluating chief complaint, vital signs, and anticipated resource needs.</div>
+    </div>
+    <div class="protocol-card">
+      <div class="protocol-tag">OLDCARTS</div>
+      <div class="protocol-name">Structured Intake Interview</div>
+      <div class="protocol-desc">Onset · Location · Duration · Character · Aggravating · Relieving · Timing · Severity. Standard nursing intake framework — agents must collect all 9 fields efficiently before completing intake.</div>
+    </div>
+    <div class="protocol-card">
+      <div class="protocol-tag">START MCI</div>
+      <div class="protocol-name">Mass Casualty Triage</div>
+      <div class="protocol-desc">Simple Triage and Rapid Treatment protocol used at mass casualty incidents. 5-step decision tree: walk → breathe → rate → pulse → commands → tag RED / YELLOW / GREEN / BLACK. Confusing RED and BLACK incurs a −0.15 penalty per error.</div>
+    </div>
+    <div class="protocol-card">
+      <div class="protocol-tag">qSOFA</div>
+      <div class="protocol-name">Sepsis Screening</div>
+      <div class="protocol-desc">quick Sequential Organ Failure Assessment. Score 1 point each for RR ≥ 22, GCS &lt; 15, SBP ≤ 100. Score ≥ 2 = high risk → agents must flag the patient and order all 7 sepsis bundle items.</div>
+    </div>
+    <div class="protocol-card">
+      <div class="protocol-tag">SBAR</div>
+      <div class="protocol-name">Shift Handoff Protocol</div>
+      <div class="protocol-desc">Situation · Background · Assessment · Recommendation. Standardised nurse-to-nurse communication framework. Agents report 12 structured fields across 3 critical patients — incomplete handoffs risk patient safety and lower the score.</div>
+    </div>
+    <div class="protocol-card">
+      <div class="protocol-tag">Capacity Law</div>
+      <div class="protocol-name">Consent Assessment</div>
+      <div class="protocol-desc">4-criterion legal standard: understands information · appreciates situation · reasons through options · communicates choice. Agents assess capacity and navigate 6 consent pathways across 3 distinct scenarios. Dangerous shortcuts are penalised −0.30.</div>
+    </div>
+  </div>
 
 </main>
 
