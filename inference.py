@@ -51,7 +51,7 @@ API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
 MODEL_NAME   = os.getenv("MODEL_NAME",   "Qwen/Qwen2.5-72B-Instruct")
 ENV_BASE_URL = os.getenv("ENV_BASE_URL", "http://localhost:7860")
 BENCHMARK    = "medical_triage"
-MAX_STEPS    = 25
+MAX_STEPS    = 45  # must exceed env MAX_STEPS for the longest tasks
 TEMPERATURE  = 0.1
 MAX_TOKENS   = 512
 SUCCESS_SCORE_THRESHOLD = 0.5
@@ -124,11 +124,19 @@ SYSTEM_PROMPTS: Dict[str, str] = {
 """).strip(),
 
 "queue_management": textwrap.dedent("""
-    You are the charge nurse managing the ED waiting room.
-    Order patients by ESI (1 most urgent to 5 least urgent).
-    Watch for deterioration alerts and re-prioritise immediately.
+    You are the charge nurse ordering the ED waiting room by clinical urgency.
+    Patients: Q001, Q002, Q003, Q004, Q005.
+
+    MANDATORY: First call get_vitals for ALL 5 patients before prioritizing anyone:
+    get_vitals:Q001 -> get_vitals:Q002 -> get_vitals:Q003 -> get_vitals:Q004 -> get_vitals:Q005
+
+    THEN prioritize ALL 5 from most to least urgent:
+    ESI2(stroke/cardiac)>ESI3(stable sick)>ESI4(one resource)>ESI5(no resources).
+    Same ESI level: longer wait time = higher priority.
+    Call prioritize for ALL 5 patients, then finalize_queue.
+
     Reply with EXACTLY ONE action:
-    ACTION: prioritize:<patient_id>  OR  ACTION: get_vitals:<patient_id>  OR  ACTION: finalize_queue
+    ACTION: get_vitals:<id>  OR  ACTION: prioritize:<id>  OR  ACTION: finalize_queue
 """).strip(),
 
 "medication_check": textwrap.dedent("""
@@ -140,29 +148,67 @@ SYSTEM_PROMPTS: Dict[str, str] = {
 """).strip(),
 
 "discharge_planning": textwrap.dedent("""
-    You are an ED nurse creating a discharge plan for the patient's specific diagnosis.
-    Add relevant instructions, return-to-ED warnings, and appropriate follow-up timing.
-    Always include ed_return_if_worse.
-    Reply with EXACTLY ONE action:
-    ACTION: add_instruction:<key>  OR  ACTION: add_warning:<key>  OR  ACTION: set_followup:<days>  OR  ACTION: complete_discharge
+    You are an ED nurse. Follow these steps IN ORDER — do NOT skip ahead.
+
+    ADD these 5 instructions one per turn:
+    1. add_instruction:rest_48h
+    2. add_instruction:complete_antibiotics
+    3. add_instruction:hydration
+    4. add_instruction:avoid_alcohol
+    5. add_instruction:otc_pain_management
+
+    ADD these 4 warnings one per turn:
+    6. add_warning:fever_101
+    7. add_warning:difficulty_breathing
+    8. add_warning:rash_hives
+    9. add_warning:ed_return_if_worse
+
+    THEN:
+    10. set_followup:5
+    11. complete_discharge
+
+    CRITICAL RULE: Do NOT call complete_discharge until steps 1-10 are all done.
+    Reply with EXACTLY ONE action per turn. No explanation.
 """).strip(),
 
 "mass_casualty": textwrap.dedent("""
-    You are MCI triage officer. Apply START protocol:
-    Can walk?->GREEN. No breath after repositioning?->BLACK.
-    RR>30 or <10?->RED. No radial pulse?->RED. Cannot follow commands?->RED. Stable->YELLOW.
-    Never swap RED and BLACK — penalty -0.15. Inspect before tagging.
+    You are MCI triage officer. 6 patients: MCI-A1, MCI-A2, MCI-A3, MCI-A4, MCI-A5, MCI-A6.
+
+    STRICT RULE: inspect ONE patient then IMMEDIATELY tag that SAME patient. Never re-inspect.
+    Work through patients IN ORDER: A1, A2, A3, A4, A5, A6.
+    Call finalize_scene ONLY after all 6 are tagged.
+
+    START protocol after inspecting:
+    Can walk?           -> tag GREEN
+    No breath after repositioning? -> tag BLACK (not RED — deceased/expectant)
+    RR>30 or <10?      -> tag RED
+    No radial pulse?    -> tag RED
+    Cannot follow commands? -> tag RED
+    All criteria OK?   -> tag YELLOW
+
+    CRITICAL: BLACK = no breathing (deceased). RED = alive but critical. Never swap them (-0.15).
+
     Reply with EXACTLY ONE action:
     ACTION: inspect:<id>  OR  ACTION: tag:<id>:<RED|YELLOW|GREEN|BLACK>  OR  ACTION: finalize_scene
 """).strip(),
 
 "sepsis_screening": textwrap.dedent("""
-    You are screening for sepsis using qSOFA.
-    Score 1 each: RR>=22, GCS<15, SBP<=100. Score>=2 = HIGH RISK.
-    For HIGH RISK order ALL 7 bundle items:
-    blood_cultures, lactate, cbc, bmp, iv_access, iv_fluids, notify_physician
+    You are screening 4 patients: SS001, SS002, SS003, SS004.
+    qSOFA: RR>=22=1pt, GCS<15=1pt, SBP<=100=1pt. Score>=2 = HIGH RISK.
+
+    STRICT WORKFLOW for each patient:
+    Step A: screen:<id>       — the system will show you the qSOFA score
+    Step B: If score>=2 -> flag_sepsis:<id>   |   If score<2 -> clear:<id>
+    Step C: If flagged, order EACH of these 7 items one at a time:
+            blood_cultures, lactate, cbc, bmp, iv_access, iv_fluids, notify_physician
+
+    IMPORTANT: After screen:<id> you MUST flag or clear before moving to the next patient.
+    After flagging you MUST order all 7 bundle items. Do NOT call complete_screening
+    until ALL 4 patients are screened AND all flagged patients have all 7 items ordered.
+
     Reply with EXACTLY ONE action:
-    ACTION: screen:<id>  OR  ACTION: flag_sepsis:<id>  OR  ACTION: clear:<id>  OR  ACTION: order:<id>:<item>  OR  ACTION: complete_screening
+    ACTION: screen:<id>  OR  ACTION: flag_sepsis:<id>  OR  ACTION: clear:<id>
+    OR  ACTION: order:<id>:<bundle_item>  OR  ACTION: complete_screening
 """).strip(),
 
 "bed_allocation": textwrap.dedent("""
@@ -175,24 +221,64 @@ SYSTEM_PROMPTS: Dict[str, str] = {
 """).strip(),
 
 "shift_handoff": textwrap.dedent("""
-    You are the outgoing nurse completing SBAR handoff for all critical patients.
-    Report ALL 12 fields: situation_chief_complaint, situation_current_status, situation_acuity_level,
+    You are the outgoing nurse completing SBAR handoff.
+    There are 3 patients: HO001, HO002, HO003. You must report fields for ALL of them.
+
+    For each patient, report these fields in order:
+    situation_chief_complaint, situation_current_status, situation_acuity_level,
     background_medical_history, background_current_medications, background_allergies,
     assessment_esi_level, assessment_vital_trend, assessment_key_concern,
-    recommendation_next_action, recommendation_pending_orders, recommendation_watch_for.
+    recommendation_next_action, recommendation_pending_orders, recommendation_watch_for
+
+    CRITICAL: Do NOT repeat the same field twice. After finishing HO001 move to HO002, then HO003.
+    Only call complete_handoff after reporting for all 3 patients.
+
     Reply with EXACTLY ONE action:
-    ACTION: report:<patient_id>:<sbar_field>  OR  ACTION: complete_handoff
+    ACTION: report:HO001:<field>  OR  ACTION: report:HO002:<field>  OR  ACTION: report:HO003:<field>
+    OR  ACTION: complete_handoff
 """).strip(),
 
 "consent_assessment": textwrap.dedent("""
-    You are an ED physician assessing capacity and consent across 3 scenarios.
-    4 capacity criteria: understands_info, appreciates_situation, reasons_through_options, communicates_choice.
-    Pathways: informed_consent, informed_refusal, emergent_exception, surrogate_consent, assent_minor, court_ordered.
-    Dangerous shortcuts penalised -0.30. Finalize each scenario after completing steps.
-    Reply with EXACTLY ONE action:
-    ACTION: assess:<sid>:<criterion>  OR  ACTION: step:<sid>:<key>  OR
-    ACTION: declare_capacity:<sid>:<has_capacity|lacks_capacity>  OR
-    ACTION: consent_path:<sid>:<pathway>  OR  ACTION: finalize:<sid>
+    You are an ED physician. Execute each sequence below EXACTLY, one action per turn.
+
+    CS001 — competent adult, appendectomy:
+    assess:CS001:understands_info
+    assess:CS001:appreciates_situation
+    assess:CS001:reasons_through_options
+    assess:CS001:communicates_choice
+    declare_capacity:CS001:has_capacity
+    step:CS001:explain_procedure
+    step:CS001:determine_capacity
+    step:CS001:document_consent
+    consent_path:CS001:informed_consent
+    finalize:CS001
+
+    CS002 — unconscious, no surrogate, intubation:
+    assess:CS002:understands_info
+    assess:CS002:appreciates_situation
+    assess:CS002:reasons_through_options
+    assess:CS002:communicates_choice
+    declare_capacity:CS002:lacks_capacity
+    step:CS002:determine_capacity
+    step:CS002:invoke_emergent_exception
+    consent_path:CS002:emergent_exception
+    finalize:CS002
+
+    CS003 — 15yo minor, transfusion:
+    assess:CS003:understands_info
+    assess:CS003:appreciates_situation
+    assess:CS003:reasons_through_options
+    assess:CS003:communicates_choice
+    declare_capacity:CS003:lacks_capacity
+    step:CS003:explain_procedure
+    step:CS003:obtain_assent
+    step:CS003:contact_guardian
+    step:CS003:contact_surrogate
+    step:CS003:surrogate_consent_doc
+    consent_path:CS003:assent_minor
+    finalize:CS003
+
+    Reply with EXACTLY ONE action per turn. No explanation needed.
 """).strip(),
 
 }
@@ -266,6 +352,106 @@ def get_model_action(
 
 # ── Episode Runner ────────────────────────────────────────────────────────────
 
+
+def build_state_reminder(task: str, actions_taken: list) -> str:
+    """Inject a live progress reminder so the model knows what remains."""
+    if not actions_taken:
+        return ""
+
+    if task == "intake_interview":
+        fields = ["pain_scale","onset","duration","location","associated_symptoms",
+                  "medical_history","current_medications","allergies","last_meal"]
+        done_fields = list(dict.fromkeys(
+            a.replace("ask:","") for a in actions_taken if a.startswith("ask:")
+        ))
+        remaining = [f for f in fields if f not in done_fields]
+        if not remaining or "complete_intake" in actions_taken:
+            return ""
+        return f"\n[REMINDER] Already asked: {done_fields}. Still need: {remaining}. Do NOT repeat already-asked fields."
+
+    elif task == "mass_casualty":
+        patients = ["MCI-A1","MCI-A2","MCI-A3","MCI-A4","MCI-A5","MCI-A6"]
+        tagged = list(dict.fromkeys(
+            a.split(":")[1] for a in actions_taken if a.startswith("tag:")
+        ))
+        untagged = [p for p in patients if p not in tagged]
+        if not untagged:
+            return "\n[REMINDER] All 6 tagged. Call finalize_scene NOW."
+        return f"\n[REMINDER] Tagged so far: {tagged}. MUST still tag: {untagged}. Do NOT call finalize_scene yet."
+
+    elif task == "sepsis_screening":
+        patients = ["SS001","SS002","SS003","SS004"]
+        screened = [p for p in patients if f"screen:{p}" in actions_taken]
+        flagged  = [p for p in patients if f"flag_sepsis:{p}" in actions_taken]
+        cleared  = [p for p in patients if f"clear:{p}" in actions_taken]
+        bundle   = ["blood_cultures","lactate","cbc","bmp","iv_access","iv_fluids","notify_physician"]
+        unscreened = [p for p in patients if p not in screened]
+        parts = []
+        if unscreened:
+            parts.append(f"Next: screen:{unscreened[0]}")
+        for p in flagged:
+            ordered = [item for item in bundle if f"order:{p}:{item}" in actions_taken]
+            missing = [item for item in bundle if item not in ordered]
+            if missing:
+                parts.append(f"{p} still needs: {missing}")
+        unhandled = [p for p in screened if p not in flagged and p not in cleared]
+        if unhandled:
+            parts.append(f"Flag or clear: {unhandled}")
+        all_done = (len(screened)==4 and not unscreened and
+            all(all(f"order:{p}:{item}" in actions_taken for item in bundle) for p in flagged))
+        if all_done:
+            return "\n[REMINDER] All done. Call complete_screening NOW."
+        return "\n[REMINDER] " + " | ".join(parts) if parts else ""
+
+    elif task == "shift_handoff":
+        patients = ["HO001","HO002","HO003"]
+        fields = ["situation_chief_complaint","situation_current_status","situation_acuity_level",
+                  "background_medical_history","background_current_medications","background_allergies",
+                  "assessment_esi_level","assessment_vital_trend","assessment_key_concern",
+                  "recommendation_next_action","recommendation_pending_orders","recommendation_watch_for"]
+        parts = []
+        all_complete = True
+        for p in patients:
+            reported = list(dict.fromkeys(
+                a.replace(f"report:{p}:","") for a in actions_taken if a.startswith(f"report:{p}:")
+            ))
+            missing = [f for f in fields if f not in reported]
+            if missing:
+                all_complete = False
+                parts.append(f"{p} next: {missing[0]}")
+            else:
+                parts.append(f"{p}:DONE")
+        if all_complete:
+            return "\n[REMINDER] All 3 patients complete. Call complete_handoff NOW."
+        return "\n[REMINDER] " + " | ".join(parts)
+
+    elif task == "consent_assessment":
+        scenarios = ["CS001","CS002","CS003"]
+        finalized = [s for s in scenarios if f"finalize:{s}" in actions_taken]
+        remaining = [s for s in scenarios if s not in finalized]
+        if not remaining:
+            return "\n[REMINDER] All finalized."
+        current = remaining[0]
+        steps_done = [a for a in actions_taken if current in a]
+        return f"\n[REMINDER] Done: {finalized}. Now completing: {current} ({len(steps_done)} steps). After: {remaining[1:]}."
+
+    elif task == "discharge_planning":
+        instr = list(dict.fromkeys(a.replace("add_instruction:","") for a in actions_taken if a.startswith("add_instruction:")))
+        warns = list(dict.fromkeys(a.replace("add_warning:","") for a in actions_taken if a.startswith("add_warning:")))
+        followup = any("set_followup:" in a for a in actions_taken)
+        if len(instr) >= 4 and len(warns) >= 2 and followup:
+            return "\n[REMINDER] Instructions and warnings complete. Call complete_discharge NOW."
+        missing = []
+        if len(instr) < 4:
+            missing.append(f"need {4-len(instr)} more instructions")
+        if len(warns) < 2:
+            missing.append(f"need {2-len(warns)} more warnings")
+        if not followup:
+            missing.append("need set_followup:<days>")
+        return f"\n[REMINDER] Added instructions: {instr}. Added warnings: {warns}. Still need: {missing}. Do NOT repeat already-added items."
+
+    return ""
+
 def run_episode(
     client: OpenAI,
     env_client: EnvClient,
@@ -275,11 +461,12 @@ def run_episode(
     system_prompt = SYSTEM_PROMPTS.get(task, SYSTEM_PROMPTS["esi_assignment"])
     log_start(task=task, env=BENCHMARK, model=MODEL_NAME)
 
-    rewards:     List[float] = []
-    history:     List[Dict]  = []
-    steps_taken: int         = 0
-    score:       float       = 0.0
-    success:     bool        = False
+    rewards:       List[float] = []
+    history:       List[Dict]  = []
+    actions_taken: List[str]   = []
+    steps_taken:   int         = 0
+    score:         float       = 0.0
+    success:       bool        = False
 
     try:
         result      = env_client.reset(task=task, seed=seed)
@@ -290,8 +477,13 @@ def run_episode(
             if done:
                 break
 
-            raw    = get_model_action(client, system_prompt, obs_message, history, task)
+            # Inject live state reminder so model always knows what remains
+            reminder     = build_state_reminder(task, actions_taken)
+            augmented    = obs_message + reminder
+
+            raw    = get_model_action(client, system_prompt, augmented, history, task)
             action = parse_action(raw, task)
+            actions_taken.append(action)
 
             try:
                 result      = env_client.step(task=task, content=action)
@@ -315,7 +507,7 @@ def run_episode(
             if done:
                 break
 
-        score   = min(max(score, 0.001), 0.999)  # strictly (0, 1) — validator rejects 0.0 and 1.0
+        score   = min(max(score, 0.001), 0.999)
         success = score >= SUCCESS_SCORE_THRESHOLD
 
     except Exception as exc:
