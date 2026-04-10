@@ -1,4 +1,4 @@
-Groq Logs 
+Groq Logs llama-3.3-70b-versatile
 ASE_URL=http://localhost:7860 uv run python inference.py
 warning: `VIRTUAL_ENV=/Users/triahavijayekkumaran/Downloads/mv4/venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead
 
