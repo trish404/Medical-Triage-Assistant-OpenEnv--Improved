@@ -15,22 +15,6 @@ tags:
 
 > **10-task emergency department environment with real clinical protocols, multi-step sequential decisions, and sophisticated grading functions.**
 
----
-
-## Why This Environment Wins
-
-| Dimension | Smart Hospital | AiTrade | Scaler SupportTriage | **Ours** |
-|---|---|---|---|---|
-| Tasks | 3 | 4 | 5 | **10** |
-| Decision type | Single-step classification | buy/sell/hold | Single-step routing | **Multi-step sequential** |
-| Clinical protocols | none | n/a | n/a | ESI, START, qSOFA, SBAR, Capacity |
-| Dynamic events | No | No | No | Yes — mid-episode deterioration |
-| Grading depth | Simple accuracy | Simple reward | Simple reward | Kendall-tau, F1, partial credit, penalties |
-
-**Smart Hospital** uses one action per patient (pick department + seriousness = done).  
-Our agents make **5–22 sequential decisions** per episode with causal dependencies between steps.
-
----
 
 ## Task Roster
 
