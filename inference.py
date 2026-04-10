@@ -315,7 +315,7 @@ def run_episode(
             if done:
                 break
 
-        score   = min(max(score, 0.0), 1.0)
+        score   = min(max(score, 0.001), 0.999)  # strictly (0, 1) — validator rejects 0.0 and 1.0
         success = score >= SUCCESS_SCORE_THRESHOLD
 
     except Exception as exc:
