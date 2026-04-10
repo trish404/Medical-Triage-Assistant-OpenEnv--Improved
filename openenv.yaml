@@ -1,0 +1,116 @@
+name: medical-triage-env
+version: "3.0.0"
+description: >
+  10-task emergency department triage environment. Agents make multi-step
+  sequential decisions using real clinical protocols: ESI, START MCI triage,
+  qSOFA sepsis screening, SBAR shift handoff, and capacity/consent assessment.
+  Unlike single-step classification competitors, episodes require 5–22 causal
+  sequential decisions with dynamic mid-episode events.
+
+author: "OpenEnv Hackathon Submission"
+license: MIT
+
+tags:
+  - openenv
+  - medical
+  - triage
+  - healthcare
+  - emergency-department
+  - clinical-protocols
+
+tasks:
+  - name: esi_assignment
+    difficulty: easy
+    description: Assign ESI level (1-5) using the ESI v4 decision tree
+    max_steps: 5
+    reward_range: [0.0, 1.0]
+
+  - name: intake_interview
+    difficulty: medium
+    description: Conduct a structured OLDCARTS patient intake interview
+    max_steps: 15
+    reward_range: [0.0, 1.0]
+
+  - name: queue_management
+    difficulty: hard
+    description: Prioritise ED waiting room with real-time deterioration events
+    max_steps: 20
+    reward_range: [0.0, 1.0]
+
+  - name: medication_check
+    difficulty: medium
+    description: Screen medications for allergy cross-reactivity and drug interactions
+    max_steps: 12
+    reward_range: [0.0, 1.0]
+
+  - name: discharge_planning
+    difficulty: medium
+    description: Build discharge instructions, warnings, and follow-up timing
+    max_steps: 18
+    reward_range: [0.0, 1.0]
+
+  - name: mass_casualty
+    difficulty: hard
+    description: Apply START MCI triage protocol across multiple victims
+    max_steps: 14
+    reward_range: [0.0, 1.0]
+
+  - name: sepsis_screening
+    difficulty: hard
+    description: Screen patients using qSOFA criteria and initiate sepsis bundles
+    max_steps: 16
+    reward_range: [0.0, 1.0]
+
+  - name: bed_allocation
+    difficulty: medium
+    description: Allocate typed ED beds under inventory constraints
+    max_steps: 15
+    reward_range: [0.0, 1.0]
+
+  - name: shift_handoff
+    difficulty: medium
+    description: Complete SBAR structured handoff for critical patients
+    max_steps: 22
+    reward_range: [0.0, 1.0]
+
+  - name: consent_assessment
+    difficulty: medium
+    description: Assess capacity and navigate consent pathways across 3 scenarios
+    max_steps: 12
+    reward_range: [0.0, 1.0]
+
+observation_space:
+  type: structured
+  schema: TriageObservation (Pydantic)
+  fields:
+    task_type: "str — which task is active"
+    patient: "Patient | null — single patient (ESI/intake)"
+    queue: "List[Patient] | null — patient queue"
+    conversation_history: "List[{role, content}]"
+    available_actions: "List[str] — valid actions this step"
+    step_number: "int"
+    message: "str — narrative state description"
+    done: "bool"
+
+action_space:
+  type: structured
+  schema: TriageAction (Pydantic)
+  fields:
+    action_type: "str — text"
+    content: "str — action payload"
+    target_patient_id: "str | null"
+
+endpoints:
+  reset: "POST /tasks/{task_name}/reset"
+  step:  "POST /tasks/{task_name}/step"
+  tasks: "GET  /tasks"
+  info:  "GET  /tasks/{task_name}"
+  grade: "GET  /tasks/{task_name}/grading_info"
+  ui:    "GET  /web"
+  docs:  "GET  /docs"
+
+deployment:
+  platform: huggingface-spaces
+  framework: docker
+  port: 7860
+  base_path: /docs

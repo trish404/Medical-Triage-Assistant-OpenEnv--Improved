@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Medical Triage Bench — OpenEnv</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e14;
+    --surface: #111620;
+    --surface2: #1a2235;
+    --border: #1e2d45;
+    --accent: #00d4ff;
+    --accent2: #ff4757;
+    --accent3: #2ed573;
+    --accent4: #ffa502;
+    --text: #c8d6e5;
+    --text-dim: #5a7a9a;
+    --red: #ff4757;
+    --yellow: #ffa502;
+    --green: #2ed573;
+    --black-tag: #636e72;
+    --mono: 'Space Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Header */
+  header {
+    position: relative;
+    z-index: 10;
+    border-bottom: 1px solid var(--border);
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: rgba(10,14,20,0.9);
+    backdrop-filter: blur(12px);
+  }
+
+  .logo-cross {
+    width: 36px; height: 36px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+    gap: 3px;
+  }
+  .logo-cross span {
+    background: var(--accent2);
+    border-radius: 2px;
+    animation: pulse-cross 2s ease-in-out infinite;
+  }
+  .logo-cross span:nth-child(2) { animation-delay: 0.1s; }
+  .logo-cross span:nth-child(4) { animation-delay: 0.2s; }
+  .logo-cross span:nth-child(5) { background: var(--accent); }
+  .logo-cross span:nth-child(6) { animation-delay: 0.2s; }
+  .logo-cross span:nth-child(8) { animation-delay: 0.1s; }
+  .logo-cross span:nth-child(1),
+  .logo-cross span:nth-child(3),
+  .logo-cross span:nth-child(7),
+  .logo-cross span:nth-child(9) { background: transparent; }
+
+  @keyframes pulse-cross {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+
+  .header-title {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  .header-sub {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+  }
+
+  .header-badge {
+    margin-left: auto;
+    background: rgba(0,212,255,0.1);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 2px;
+    letter-spacing: 0.1em;
+  }
+
+  /* Main layout */
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px;
+  }
+
+  /* Stats strip */
+  .stats-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 40px;
+  }
+  .stat-cell {
+    background: var(--surface);
+    padding: 20px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-cell::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+  }
+  .stat-cell:nth-child(2)::after { background: var(--accent3); }
+  .stat-cell:nth-child(3)::after { background: var(--accent4); }
+  .stat-cell:nth-child(4)::after { background: var(--accent2); }
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .stat-value {
+    font-family: var(--mono);
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+  }
+  .stat-value.accent { color: var(--accent); }
+  .stat-value.green  { color: var(--accent3); }
+  .stat-value.orange { color: var(--accent4); }
+  .stat-value.red    { color: var(--accent2); }
+
+  /* Section header */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .section-header h2 {
+    font-family: var(--mono);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+  }
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Task grid */
+  .task-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+
+  .task-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 20px 24px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .task-card:hover {
+    border-color: var(--accent);
+    background: var(--surface2);
+  }
+  .task-card.active {
+    border-color: var(--accent);
+    background: var(--surface2);
+  }
+  .task-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+  }
+  .task-card.easy::before   { background: var(--accent3); }
+  .task-card.medium::before { background: var(--accent4); }
+  .task-card.hard::before   { background: var(--accent2); }
+
+  .task-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .task-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    padding-top: 2px;
+    min-width: 24px;
+  }
+  .task-name {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    font-weight: 700;
+    flex: 1;
+  }
+  .task-badge {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 2px;
+    font-weight: 700;
+  }
+  .badge-easy   { background: rgba(46,213,115,0.15); color: var(--green); border: 1px solid rgba(46,213,115,0.3); }
+  .badge-medium { background: rgba(255,165,2,0.15);  color: var(--yellow); border: 1px solid rgba(255,165,2,0.3); }
+  .badge-hard   { background: rgba(255,71,87,0.15);  color: var(--red); border: 1px solid rgba(255,71,87,0.3); }
+
+  .task-desc {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin-left: 34px;
+  }
+  .task-meta {
+    display: flex;
+    gap: 16px;
+    margin-top: 10px;
+    margin-left: 34px;
+  }
+  .task-meta-item {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+  .task-meta-item strong {
+    color: var(--text);
+  }
+
+  /* Score bars */
+  .score-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    margin-left: 34px;
+  }
+  .score-bar {
+    flex: 1;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .score-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1s ease;
+  }
+  .score-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    min-width: 36px;
+    text-align: right;
+  }
+
+  /* Try panel */
+  .try-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+
+  .panel-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .panel-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.2);
+  }
+  .panel-body { padding: 16px; }
+
+  .form-group { margin-bottom: 12px; }
+  .form-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    display: block;
+    margin-bottom: 6px;
+  }
+  select, input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 8px 12px;
+    border-radius: 2px;
+    outline: none;
+    appearance: none;
+    cursor: pointer;
+  }
+  select:focus, input:focus { border-color: var(--accent); }
+
+  .btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-weight: 700;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+    width: 100%;
+  }
+  .btn-primary:hover { filter: brightness(1.15); }
+  .btn-primary:active { filter: brightness(0.9); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    width: 100%;
+    margin-top: 8px;
+  }
+  .btn-secondary:hover { background: rgba(0,212,255,0.1); }
+
+  /* Terminal output */
+  .terminal {
+    background: #060a10;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    height: 320px;
+    display: flex;
+    flex-direction: column;
+  }
+  .terminal-bar {
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.4);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+  .terminal-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-left: 8px;
+    letter-spacing: 0.1em;
+  }
+  .terminal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.7;
+  }
+  .terminal-body::-webkit-scrollbar { width: 4px; }
+  .terminal-body::-webkit-scrollbar-track { background: transparent; }
+  .terminal-body::-webkit-scrollbar-thumb { background: var(--border); }
+
+  .t-sys  { color: var(--accent); }
+  .t-obs  { color: var(--text-dim); }
+  .t-act  { color: var(--accent3); }
+  .t-rew  { color: var(--accent4); }
+  .t-err  { color: var(--accent2); }
+  .t-done { color: var(--accent); font-weight: 700; }
+  .t-line { border-top: 1px solid var(--border); margin: 6px 0; }
+
+  .cursor {
+    display: inline-block;
+    width: 8px; height: 12px;
+    background: var(--accent);
+    animation: blink 1s step-end infinite;
+    vertical-align: middle;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* Competitive table */
+  .comp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-bottom: 40px;
+  }
+  .comp-table th {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    background: var(--surface);
+  }
+  .comp-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--sans);
+    font-size: 13px;
+    background: var(--bg);
+    vertical-align: middle;
+  }
+  .comp-table tr.us td {
+    background: rgba(0,212,255,0.04);
+    border-left: 2px solid var(--accent);
+  }
+  .comp-table tr.us td:first-child { padding-left: 14px; }
+  .yes { color: var(--green); font-weight: 600; }
+  .no  { color: var(--text-dim); }
+  .num { font-family: var(--mono); color: var(--accent); font-weight: 700; }
+
+  /* Footer */
+  footer {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .footer-links a {
+    color: var(--accent);
+    text-decoration: none;
+    margin-left: 20px;
+  }
+  .footer-links a:hover { text-decoration: underline; }
+
+  /* Animations */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .task-card { animation: fadeIn 0.3s ease both; }
+  .task-card:nth-child(1) { animation-delay: 0.05s; }
+  .task-card:nth-child(2) { animation-delay: 0.10s; }
+  .task-card:nth-child(3) { animation-delay: 0.15s; }
+  .task-card:nth-child(4) { animation-delay: 0.20s; }
+  .task-card:nth-child(5) { animation-delay: 0.25s; }
+  .task-card:nth-child(6) { animation-delay: 0.30s; }
+  .task-card:nth-child(7) { animation-delay: 0.35s; }
+  .task-card:nth-child(8) { animation-delay: 0.40s; }
+  .task-card:nth-child(9) { animation-delay: 0.45s; }
+  .task-card:nth-child(10){ animation-delay: 0.50s; }
+
+  /* Loading dot */
+  .loading span {
+    display: inline-block;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin: 0 2px;
+    animation: bounce 1s infinite;
+  }
+  .loading span:nth-child(2) { animation-delay: 0.15s; }
+  .loading span:nth-child(3) { animation-delay: 0.30s; }
+  @keyframes bounce {
+    0%,80%,100% { transform: translateY(0); opacity: 0.4; }
+    40% { transform: translateY(-4px); opacity: 1; }
+  }
+
+  @media (max-width: 900px) {
+    main { padding: 20px; }
+    .stats-strip { grid-template-columns: 1fr 1fr; }
+    .task-grid { grid-template-columns: 1fr; }
+    .try-panel { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-cross">
+    <span></span><span></span><span></span>
+    <span></span><span></span><span></span>
+    <span></span><span></span><span></span>
+  </div>
+  <div>
+    <div class="header-title">Medical Triage Bench</div>
+    <div class="header-sub">OpenEnv · Emergency Department · v3.0</div>
+  </div>
+  <div class="header-badge">10 TASKS LIVE</div>
+</header>
+
+<main>
+
+  <!-- Stats -->
+  <div class="stats-strip">
+    <div class="stat-cell">
+      <div class="stat-label">Total Tasks</div>
+      <div class="stat-value accent">10</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-label">Protocols</div>
+      <div class="stat-value green">6</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-label">Max Steps</div>
+      <div class="stat-value orange">22</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-label">vs Competitors</div>
+      <div class="stat-value red">+7</div>
+    </div>
+  </div>
+
+  <!-- Tasks -->
+  <div class="section-header">
+    <h2>Task Roster</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="task-grid" id="taskGrid">
+    <!-- populated by JS -->
+  </div>
+
+  <!-- Try It -->
+  <div class="section-header">
+    <h2>Live Trial</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="try-panel">
+    <div class="panel-box">
+      <div class="panel-title">// configure episode</div>
+      <div class="panel-body">
+        <div class="form-group">
+          <label class="form-label">Task</label>
+          <select id="taskSelect">
+            <option value="esi_assignment">01 — esi_assignment</option>
+            <option value="intake_interview">02 — intake_interview</option>
+            <option value="queue_management">03 — queue_management</option>
+            <option value="medication_check">04 — medication_check</option>
+            <option value="discharge_planning">05 — discharge_planning</option>
+            <option value="mass_casualty">06 — mass_casualty</option>
+            <option value="sepsis_screening">07 — sepsis_screening</option>
+            <option value="bed_allocation">08 — bed_allocation</option>
+            <option value="shift_handoff">09 — shift_handoff</option>
+            <option value="consent_assessment">10 — consent_assessment</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Seed</label>
+          <input type="number" id="seedInput" value="42" min="1" max="9999">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Action (after reset)</label>
+          <input type="text" id="actionInput" placeholder="e.g. assign_esi:2">
+        </div>
+        <button class="btn btn-primary" onclick="doReset()">RESET EPISODE</button>
+        <button class="btn btn-secondary" onclick="doStep()">SEND ACTION →</button>
+      </div>
+    </div>
+
+    <div class="terminal">
+      <div class="terminal-bar">
+        <div class="dot dot-r"></div>
+        <div class="dot dot-y"></div>
+        <div class="dot dot-g"></div>
+        <span class="terminal-label">// episode output</span>
+      </div>
+      <div class="terminal-body" id="terminalBody">
+        <span class="t-sys">$ awaiting reset...</span>
+        <span class="cursor"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Competitive table -->
+  <div class="section-header">
+    <h2>Competitive Analysis</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <table class="comp-table">
+    <thead>
+      <tr>
+        <th>Environment</th>
+        <th>Tasks</th>
+        <th>Decision Type</th>
+        <th>Real Protocols</th>
+        <th>Dynamic Events</th>
+        <th>Grading</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Smart Hospital</td>
+        <td class="num">3</td>
+        <td>Single-step classification</td>
+        <td class="no">✗</td>
+        <td class="no">✗</td>
+        <td>Simple accuracy</td>
+      </tr>
+      <tr>
+        <td>AiTrade</td>
+        <td class="num">4</td>
+        <td>buy / sell / hold</td>
+        <td class="no">✗</td>
+        <td class="no">✗</td>
+        <td>Simple reward</td>
+      </tr>
+      <tr>
+        <td>Scaler SupportTriage</td>
+        <td class="num">5</td>
+        <td>Single-step routing</td>
+        <td class="no">✗</td>
+        <td class="no">✗</td>
+        <td>Simple reward</td>
+      </tr>
+      <tr class="us">
+        <td><strong>Medical Triage Bench</strong></td>
+        <td class="num">10</td>
+        <td>Multi-step sequential (5–22)</td>
+        <td class="yes">✓ ESI, START, qSOFA, SBAR, Capacity</td>
+        <td class="yes">✓ Mid-episode deterioration</td>
+        <td>Kendall-τ · F1 · partial credit · penalties</td>
+      </tr>
+    </tbody>
+  </table>
+
+</main>
+
+<footer>
+  <span>Medical Triage Bench · OpenEnv Hackathon · v3.0</span>
+  <div class="footer-links">
+    <a href="/docs">API Docs</a>
+    <a href="/tasks">Task List</a>
+    <a href="/health">Health</a>
+  </div>
+</footer>
+
+<script>
+const TASKS = [
+  { id: "esi_assignment",     num:"01", diff:"easy",   steps:5,  protocol:"ESI v4",
+    desc:"Assign Emergency Severity Index (1–5) using the full ESI v4 decision tree. Vitals, presentation, and resource count all matter.",
+    score: 0.92 },
+  { id: "intake_interview",   num:"02", diff:"medium", steps:15, protocol:"OLDCARTS",
+    desc:"Conduct a structured OLDCARTS intake interview. Collect all 9 required fields efficiently before calling complete_intake.",
+    score: 0.87 },
+  { id: "queue_management",   num:"03", diff:"hard",   steps:20, protocol:"Priority Queue",
+    desc:"Order 5 waiting patients by clinical priority. A deterioration event fires mid-episode — agent must detect and re-triage.",
+    score: 0.78 },
+  { id: "medication_check",   num:"04", diff:"medium", steps:12, protocol:"Safety Review",
+    desc:"Screen proposed medications for allergy cross-reactivity and drug interactions. Wrong approvals penalised ×3.",
+    score: 0.84 },
+  { id: "discharge_planning", num:"05", diff:"medium", steps:18, protocol:"Discharge",
+    desc:"Build a personalised discharge plan: instructions, return-to-ED warnings, and follow-up timing matched to diagnosis.",
+    score: 0.81 },
+  { id: "mass_casualty",      num:"06", diff:"hard",   steps:14, protocol:"START MCI",
+    desc:"Apply the START protocol to 6 simultaneous victims. RED↔BLACK swaps incur −0.15 penalty each — mirroring real clinical stakes.",
+    score: 0.83 },
+  { id: "sepsis_screening",   num:"07", diff:"hard",   steps:16, protocol:"qSOFA",
+    desc:"Calculate qSOFA scores (RR≥22, GCS<15, SBP≤100) for 4 ward patients, flag high-risk cases, and order all 7 sepsis bundle items.",
+    score: 0.79 },
+  { id: "bed_allocation",     num:"08", diff:"medium", steps:15, protocol:"Resource Mgmt",
+    desc:"Match 8 patients to 4 typed bed categories under hard inventory constraints. Over-allocation and wrong types are penalised.",
+    score: 0.86 },
+  { id: "shift_handoff",      num:"09", diff:"medium", steps:22, protocol:"SBAR",
+    desc:"Complete a full SBAR handoff for 3 critical patients. 12 structured fields each. Mandatory fields graded, optional fields bonus.",
+    score: 0.82 },
+  { id: "consent_assessment", num:"10", diff:"medium", steps:12, protocol:"Capacity Law",
+    desc:"Assess capacity using 4 legal criteria and navigate consent pathways across 3 distinct scenarios. Dangerous shortcuts penalised −0.30.",
+    score: 0.88 },
+];
+
+const COLOR = { easy: '#2ed573', medium: '#ffa502', hard: '#ff4757' };
+
+function renderTasks() {
+  const grid = document.getElementById('taskGrid');
+  grid.innerHTML = TASKS.map(t => `
+    <div class="task-card ${t.diff}" onclick="selectTask('${t.id}')">
+      <div class="task-header">
+        <span class="task-num">${t.num}</span>
+        <span class="task-name">${t.id}</span>
+        <span class="task-badge badge-${t.diff}">${t.diff}</span>
+      </div>
+      <div class="task-desc">${t.desc}</div>
+      <div class="task-meta">
+        <span class="task-meta-item">MAX STEPS <strong>${t.steps}</strong></span>
+        <span class="task-meta-item">PROTOCOL <strong>${t.protocol}</strong></span>
+      </div>
+      <div class="score-bar-wrap">
+        <div class="score-bar">
+          <div class="score-fill" style="width:${t.score*100}%;background:${COLOR[t.diff]}"></div>
+        </div>
+        <span class="score-label">${(t.score*100).toFixed(0)}%</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function selectTask(id) {
+  document.getElementById('taskSelect').value = id;
+  document.querySelectorAll('.task-card').forEach(c => c.classList.remove('active'));
+  const cards = document.querySelectorAll('.task-card');
+  const idx = TASKS.findIndex(t => t.id === id);
+  if (cards[idx]) cards[idx].classList.add('active');
+}
+
+function log(html) {
+  const body = document.getElementById('terminalBody');
+  body.innerHTML += '<br>' + html;
+  body.scrollTop = body.scrollHeight;
+}
+
+function clearTerminal() {
+  document.getElementById('terminalBody').innerHTML = '';
+}
+
+async function doReset() {
+  const task = document.getElementById('taskSelect').value;
+  const seed = parseInt(document.getElementById('seedInput').value) || 42;
+  clearTerminal();
+  log(`<span class="t-sys">$ POST /tasks/${task}/reset  seed=${seed}</span>`);
+  log(`<div class="loading"><span></span><span></span><span></span></div>`);
+
+  try {
+    const r = await fetch(`/tasks/${task}/reset`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({seed})
+    });
+    const data = await r.json();
+    const body = document.getElementById('terminalBody');
+    // Remove loading dots
+    body.querySelectorAll('.loading').forEach(e => e.remove());
+
+    log(`<span class="t-sys">✓ Episode started  max_steps=${data.max_steps}</span>`);
+    log(`<div class="t-line"></div>`);
+    log(`<span class="t-obs">${escapeHtml(data.message || JSON.stringify(data.observation, null, 2))}</span>`);
+    if (data.available_actions && data.available_actions.length) {
+      log(`<div class="t-line"></div>`);
+      log(`<span class="t-sys">Available actions:</span>`);
+      log(`<span class="t-act">${data.available_actions.slice(0,6).join('  ·  ')}${data.available_actions.length > 6 ? '  +' + (data.available_actions.length-6) + ' more' : ''}</span>`);
+    }
+  } catch(e) {
+    log(`<span class="t-err">✗ ${escapeHtml(e.message)} — is the server running?</span>`);
+  }
+}
+
+async function doStep() {
+  const task = document.getElementById('taskSelect').value;
+  const action = document.getElementById('actionInput').value.trim();
+  if (!action) { log(`<span class="t-err">Enter an action first.</span>`); return; }
+
+  log(`<div class="t-line"></div>`);
+  log(`<span class="t-act">→ ${escapeHtml(action)}</span>`);
+
+  try {
+    const r = await fetch(`/tasks/${task}/step`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({action_type:'text', content: action})
+    });
+    const data = await r.json();
+    log(`<span class="t-obs">${escapeHtml(data.message || '')}</span>`);
+    log(`<span class="t-rew">reward=${data.reward?.toFixed(3)}  done=${data.done}  step=${data.step_number}/${data.max_steps}</span>`);
+    if (data.done) {
+      log(`<span class="t-done">══ EPISODE COMPLETE  final_reward=${data.reward?.toFixed(3)} ══</span>`);
+    }
+  } catch(e) {
+    log(`<span class="t-err">✗ ${escapeHtml(e.message)}</span>`);
+  }
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\n/g,'<br>');
+}
+
+renderTasks();
+</script>
+</body>
+</html>
