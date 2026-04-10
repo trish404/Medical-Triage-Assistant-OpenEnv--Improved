@@ -15,13 +15,54 @@ from __future__ import annotations
 import os, re, json, time, requests
 from typing import Any, Dict, List, Optional, Tuple
 
-# ── Configuration ─────────────────────────────────────────────────────────────
-SERVER_URL   = os.getenv("SERVER_URL",   "http://localhost:7860")
-MODEL        = os.getenv("TRIAGE_MODEL", "claude-sonnet-4-20250514")
-MAX_TOKENS   = int(os.getenv("MAX_TOKENS",   "700"))
-TEMPERATURE  = float(os.getenv("TEMPERATURE", "0.1"))
-HISTORY_WINDOW = 8     # keep last N turns in context
-MAX_RETRIES  = 2       # retries on bad action parse
+# ══════════════════════════════════════════════════════════════════════════════
+#  CONFIGURATION
+#  Set these via environment variables before running.
+#
+#  PROVIDER QUICK-START:
+#
+#  1. Llama 3.3 70B — Groq (free)
+#     API key: https://console.groq.com
+#     API_BASE_URL=https://api.groq.com/openai/v1
+#     MODEL_NAME=llama-3.3-70b-versatile
+#     HF_TOKEN=your_groq_key
+#
+#  2. Gemini 1.5 Flash — Google AI Studio (free)
+#     API key: https://aistudio.google.com
+#     API_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
+#     MODEL_NAME=gemini-1.5-flash
+#     HF_TOKEN=your_google_key
+#
+#  3. Mistral 7B — HuggingFace Inference (free)
+#     API key: https://huggingface.co/settings/tokens
+#     API_BASE_URL=https://api-inference.huggingface.co/v1
+#     MODEL_NAME=mistralai/Mistral-7B-Instruct-v0.3
+#     HF_TOKEN=your_hf_token
+#
+#  4. DeepSeek R1 — DeepSeek (free tier)
+#     API key: https://platform.deepseek.com
+#     API_BASE_URL=https://api.deepseek.com/v1
+#     MODEL_NAME=deepseek-reasoner
+#     HF_TOKEN=your_deepseek_key
+#
+#  Run example:
+#     API_BASE_URL=https://api.groq.com/openai/v1 \
+#     MODEL_NAME=llama-3.3-70b-versatile \
+#     HF_TOKEN=your_key \
+#     uv run python inference.py
+# ══════════════════════════════════════════════════════════════════════════════
+
+SERVER_URL     = os.getenv("SERVER_URL",    "http://localhost:7860")
+API_BASE_URL   = os.getenv("API_BASE_URL",  "https://api.groq.com/openai/v1")
+MODEL_NAME     = os.getenv("MODEL_NAME",    "llama-3.3-70b-versatile")
+HF_TOKEN       = os.getenv("HF_TOKEN",      os.getenv("API_KEY", ""))
+MAX_TOKENS     = int(os.getenv("MAX_TOKENS",    "700"))
+TEMPERATURE    = float(os.getenv("TEMPERATURE", "0.1"))
+HISTORY_WINDOW = 8   # keep last N turns in context
+MAX_RETRIES    = 2   # retries on bad action parse
+
+# Legacy alias — used in benchmark print output
+MODEL = MODEL_NAME
 
 TASKS = [
     "esi_assignment",
@@ -442,27 +483,31 @@ def validate_action(task: str, action_str: str) -> Tuple[bool, str]:
 # ══════════════════════════════════════════════════════════════════════════════
 
 def call_llm(system_prompt: str, messages: List[Dict[str, str]]) -> str:
-    """Call Anthropic API and return raw text response."""
-    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    """
+    Call any OpenAI-compatible API and return raw text response.
+    Supports: Groq, Google Gemini, HuggingFace Inference, DeepSeek.
+    Configured via API_BASE_URL, MODEL_NAME, HF_TOKEN env vars.
+    """
+    # Build message list with system prompt prepended
+    full_messages = [{"role": "system", "content": system_prompt}] + messages
+
     response = requests.post(
-        "https://api.anthropic.com/v1/messages",
+        f"{API_BASE_URL}/chat/completions",
         headers={
-            "x-api-key": api_key,
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json",
+            "Authorization": f"Bearer {HF_TOKEN}",
+            "Content-Type": "application/json",
         },
         json={
-            "model": MODEL,
+            "model": MODEL_NAME,
+            "messages": full_messages,
             "max_tokens": MAX_TOKENS,
             "temperature": TEMPERATURE,
-            "system": system_prompt,
-            "messages": messages,
         },
-        timeout=30,
+        timeout=60,
     )
     response.raise_for_status()
     data = response.json()
-    return data["content"][0]["text"].strip()
+    return data["choices"][0]["message"]["content"].strip()
 
 
 def parse_action(raw: str) -> Optional[str]:
@@ -526,8 +571,11 @@ def run_episode(task: str, seed: int = 42) -> float:
 
     messages.append({"role": "user", "content": initial_message})
 
+    print(f"[START] task={task}", flush=True)
+
     final_reward = 0.0
     done = False
+    step_num = 0
 
     while not done:
         # Trim history window
@@ -565,7 +613,7 @@ def run_episode(task: str, seed: int = 42) -> float:
                 break  # valid action
 
         if action_str is None:
-            print(f"  [WARN] Could not parse action after {MAX_RETRIES} retries. Skipping step.")
+            print(f"  [WARN] Could not parse action after {MAX_RETRIES} retries. Skipping step.", flush=True)
             break
 
         messages.append({"role": "assistant", "content": raw})
@@ -582,12 +630,16 @@ def run_episode(task: str, seed: int = 42) -> float:
         reward   = result.get("reward", 0.0)
         done     = result.get("done", False)
         obs_msg  = result.get("observation", {}).get("message", str(result))
+        step_num += 1
+
+        print(f"[STEP] task={task} step={step_num} action={action_str} reward={reward:.4f} done={done}", flush=True)
 
         if done:
             final_reward = reward
 
         messages.append({"role": "user", "content": obs_msg})
 
+    print(f"[END] task={task} score={final_reward:.4f} steps={step_num}", flush=True)
     return final_reward
 
 
