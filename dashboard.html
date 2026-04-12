@@ -316,7 +316,6 @@
     grid-template-columns: 1fr 1fr;
     gap: 12px;
     margin-bottom: 40px;
-    align-items: stretch;
   }
 
   .panel-box {
@@ -778,34 +777,34 @@
 const TASKS = [
   { id: "esi_assignment",     num:"01", diff:"easy",   steps:5,  protocol:"ESI v4",
     desc:"Assign Emergency Severity Index (1–5) using the full ESI v4 decision tree. Vitals, presentation, and resource count all matter.",
-    score: 0.92 },
+    score: 0.999 },
   { id: "intake_interview",   num:"02", diff:"medium", steps:15, protocol:"OLDCARTS",
     desc:"Conduct a structured OLDCARTS intake interview. Collect all 9 required fields efficiently before calling complete_intake.",
-    score: 0.87 },
+    score: 0.910 },
   { id: "queue_management",   num:"03", diff:"hard",   steps:20, protocol:"Priority Queue",
     desc:"Order 5 waiting patients by clinical priority. A deterioration event fires mid-episode — agent must detect and re-triage.",
-    score: 0.78 },
+    score: 0.460 },
   { id: "medication_check",   num:"04", diff:"medium", steps:12, protocol:"Safety Review",
     desc:"Screen proposed medications for allergy cross-reactivity and drug interactions. Wrong approvals penalised ×3.",
-    score: 0.84 },
+    score: 0.700 },
   { id: "discharge_planning", num:"05", diff:"medium", steps:18, protocol:"Discharge",
     desc:"Build a personalised discharge plan: instructions, return-to-ED warnings, and follow-up timing matched to diagnosis.",
-    score: 0.81 },
-  { id: "mass_casualty",      num:"06", diff:"hard",   steps:14, protocol:"START MCI",
+    score: 0.400 },
+  { id: "mass_casualty",      num:"06", diff:"hard",   steps:18, protocol:"START MCI",
     desc:"Apply the START protocol to 6 simultaneous victims. RED↔BLACK swaps incur −0.15 penalty each — mirroring real clinical stakes.",
-    score: 0.83 },
-  { id: "sepsis_screening",   num:"07", diff:"hard",   steps:16, protocol:"qSOFA",
+    score: 0.999 },
+  { id: "sepsis_screening",   num:"07", diff:"hard",   steps:22, protocol:"qSOFA",
     desc:"Calculate qSOFA scores (RR≥22, GCS<15, SBP≤100) for 4 ward patients, flag high-risk cases, and order all 7 sepsis bundle items.",
-    score: 0.79 },
+    score: 0.999 },
   { id: "bed_allocation",     num:"08", diff:"medium", steps:15, protocol:"Resource Mgmt",
     desc:"Match 8 patients to 4 typed bed categories under hard inventory constraints. Over-allocation and wrong types are penalised.",
-    score: 0.86 },
-  { id: "shift_handoff",      num:"09", diff:"medium", steps:22, protocol:"SBAR",
+    score: 0.999 },
+  { id: "shift_handoff",      num:"09", diff:"medium", steps:42, protocol:"SBAR",
     desc:"Complete a full SBAR handoff for 3 critical patients. 12 structured fields each. Mandatory fields graded, optional fields bonus.",
-    score: 0.82 },
-  { id: "consent_assessment", num:"10", diff:"medium", steps:12, protocol:"Capacity Law",
+    score: 0.999 },
+  { id: "consent_assessment", num:"10", diff:"medium", steps:36, protocol:"Capacity Law",
     desc:"Assess capacity using 4 legal criteria and navigate consent pathways across 3 distinct scenarios. Dangerous shortcuts penalised −0.30.",
-    score: 0.88 },
+    score: 0.642 },
 ];
 
 const COLOR = { easy: '#2ed573', medium: '#ffa502', hard: '#ff4757' };
